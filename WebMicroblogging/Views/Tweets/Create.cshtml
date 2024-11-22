@@ -1,0 +1,48 @@
+﻿@model WebMicroblogging.Models.CreateTweetViewModel
+
+@{
+    ViewData["Title"] = "Nuevo Tweet";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-lg rounded-lg">
+                <div class="card-header text-center bg-info text-white py-4">
+                    <h3 class="mb-0">Crear un Nuevo Tweet</h3>
+                </div>
+                <div class="card-body p-5">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+
+                        <!-- Campo de Contenido del Tweet -->
+                        <div class="form-group mb-4">
+                            <label asp-for="Content" class="form-label font-weight-bold text-secondary">¿Qué tienes en mente?</label>
+                            <textarea asp-for="Content" class="form-control rounded-lg" rows="4" placeholder="Escribe aquí tu mensaje..."></textarea>
+                            <span asp-validation-for="Content" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Campo de Imagen -->
+                        <div class="form-group mb-4">
+                            <label asp-for="Image" class="form-label font-weight-bold text-secondary">Añadir una imagen</label>
+                            <input asp-for="Image" type="file" class="form-control-file border border-light p-2 rounded">
+                            <span asp-validation-for="Image" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Botón de Publicar -->
+                        <div class="d-flex justify-content-center">
+                            <button type="submit" class="btn btn-info text-white px-5 py-2">
+                                <i class="fas fa-feather-alt"></i> Publicar Tweet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,11 @@
+﻿@model WebMicroblogging.Models.ProfileViewModel
+
+<div class="container mt-5">
+    <h2>Perfil de @Model.UserName</h2>
+    <ul class="list-group">
+        <li class="list-group-item"><strong>Usuario:</strong> @Model.UserName</li>
+        <li class="list-group-item"><strong>Email:</strong> @Model.Email</li>
+        <li class="list-group-item"><strong>Fecha de Nacimiento:</strong> @Model.FechaNacimiento?.ToString("dd/MM/yyyy")</li>
+    </ul>
+    <a asp-action="EditProfile" class="btn btn-primary mt-3">Editar Perfil</a>
+</div>

@@ -1,0 +1,75 @@
+﻿@using System.Security.Claims
+@model WebMicroblogging.Models.Tweet
+
+@{
+    ViewData["Title"] = "Detalles del Tweet";
+}
+
+<h2>Detalles del Tweet</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">@Model.User.UserName</h5>
+        <p class="card-text">@Model.Content</p>
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img src="@Model.ImageUrl" alt="Imagen del tweet" class="img-fluid tweet-image" />
+        }
+        <p class="card-text">
+            <small class="text-muted">Publicado el @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+        </p>
+
+        <!-- Botones de Like y otros (si los tienes) -->
+        <!-- Botones de Editar y Eliminar si el usuario es el propietario -->
+        @if (User.Identity.IsAuthenticated && Model.UserId == Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)))
+        {
+            <p>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-secondary">Editar</a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-sm btn-danger">Eliminar</a>
+            </p>
+        }
+    </div>
+</div>
+
+<h3>Comentarios</h3>
+
+<!-- Mostrar los comentarios -->
+@if (Model.Comments != null && Model.Comments.Any())
+{
+    foreach (var comment in Model.Comments.OrderByDescending(c => c.CreatedAt))
+    {
+        <div class="media mb-3">
+            <div class="media-body">
+                <h5 class="mt-0">@comment.User.UserName</h5>
+                <p>@comment.Content</p>
+                <p><small class="text-muted">Publicado el @comment.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small></p>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <p>No hay comentarios aún. ¡Sé el primero en comentar!</p>
+}
+
+<!-- Formulario para agregar un nuevo comentario -->
+@if (User.Identity.IsAuthenticated)
+{
+    <h4>Agregar un comentario</h4>
+    <form asp-action="CreateComment" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="TweetId" value="@Model.Id" />
+        <div class="form-group">
+            <label asp-for="Content"></label>
+            <textarea name="Content" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Content" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Comentar</button>
+    </form>
+}
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,38 @@
+﻿@model WebMicroblogging.Models.EditTweetViewModel
+
+@{
+    ViewData["Title"] = "Editar Tweet";
+}
+
+<h2>Editar Tweet</h2>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+    <div class="form-group">
+        <label asp-for="Content"></label>
+        <textarea asp-for="Content" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Content" class="text-danger"></span>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.ExistingImageUrl))
+    {
+        <div class="form-group">
+            <label>Imagen Actual:</label>
+            <div>
+                <img src="@Model.ExistingImageUrl" alt="Imagen actual" class="img-fluid tweet-image" />
+            </div>
+        </div>
+    }
+    <div class="form-group">
+        <label asp-for="Image"></label>
+        <input asp-for="Image" type="file" class="form-control-file" />
+        <span asp-validation-for="Image" class="text-danger"></span>
+        <small class="form-text text-muted">Deja este campo vacío si no deseas cambiar la imagen.</small>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

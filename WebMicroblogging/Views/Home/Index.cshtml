@@ -1,0 +1,235 @@
+﻿@using System.Security.Claims
+@model IEnumerable<WebMicroblogging.Models.Tweet>
+
+@{
+    ViewData["Title"] = "Tweets Recientes";
+}
+
+<h2>Tweets Recientes</h2>
+
+<p>
+    <a class="btn btn-primary" asp-controller="Tweets" asp-action="Create">Publicar Tweet</a>
+</p>
+
+@foreach (var tweet in Model)
+{
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <!-- Encabezado: Nombre del Usuario y Botón de Seguir -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-circle"></i> @tweet.User.UserName
+                </h5>
+                <!-- Botón de Seguir o Dejar de Seguir -->
+                @if (User.Identity.IsAuthenticated && tweet.User.Id != Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)))
+                {
+                    var isFollowing = tweet.User.FollowFollowers.Any(f => f.FollowerId == Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)));
+
+                    <form id="follow-form-@tweet.User.Id" data-user-id="@tweet.User.Id" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userId" value="@tweet.User.Id" />
+                        <button type="button" class="btn btn-sm btn-@((isFollowing) ? "danger" : "primary") follow-btn" data-following="@isFollowing">
+                            <i class="fas @((isFollowing) ? "fa-user-minus" : "fa-user-plus")"></i> @((isFollowing) ? "Dejar de Seguir" : "Seguir")
+                        </button>
+                    </form>
+                }
+            </div>
+
+            <!-- Contenido del Tweet -->
+            <p class="card-text">@tweet.Content</p>
+
+            <!-- Imagen del Tweet -->
+            @if (!string.IsNullOrEmpty(tweet.ImageUrl))
+            {
+                <div class="tweet-image-wrapper mb-3">
+                    <img src="@tweet.ImageUrl" alt="Imagen del tweet" class="img-fluid rounded">
+                </div>
+            }
+
+            <!-- Fecha de Publicación -->
+            <p class="text-muted small mb-3">
+                Publicado el @tweet.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+            </p>
+
+            <!-- Likes y Comentarios -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <!-- Likes -->
+                @{
+                    var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    Guid userId = Guid.Empty;
+                    if (Guid.TryParse(userIdString, out Guid parsedUserId))
+                    {
+                        userId = parsedUserId;
+                    }
+
+                    var userLiked = tweet.Likes.Any(l => l.UserId == userId);
+                    var likesCount = tweet.Likes.Count;
+                }
+
+                <div>
+                    <button class="btn btn-link like-button" data-tweet-id="@tweet.Id" data-is-liked="@userLiked.ToString().ToLower()">
+                        <i class="fas @((userLiked) ? "fa-heart" : "fa-heart-broken")"></i>
+                        <span id="likes-count-@tweet.Id">@likesCount</span> likes
+                    </button>
+                </div>
+
+                <!-- Comentarios -->
+                <div>
+                    <h6 class="mb-1">Comentarios:</h6>
+                    @if (tweet.Comments != null && tweet.Comments.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var comment in tweet.Comments.OrderBy(c => c.CreatedAt))
+                            {
+                                <li class="list-group-item">
+                                    @if (comment.User != null)
+                                    {
+                                        <strong>@comment.User.UserName:</strong> @comment.Content
+                                    }
+                                    else
+                                    {
+                                        <strong>Usuario desconocido:</strong> @comment.Content
+                                    }
+                                    <br />
+                                    <small class="text-muted">@comment.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p>No hay comentarios aún.</p>
+                    }
+                </div>
+
+            </div>
+
+            <!-- Formulario para Agregar Comentario -->
+            @if (User.Identity.IsAuthenticated)
+            {
+                <form asp-controller="Comments" asp-action="Create" method="post" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="tweetId" value="@tweet.Id" />
+                    <div class="form-group mb-2">
+                        <textarea name="content" class="form-control" rows="2" placeholder="Escribe un comentario..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-comment"></i> Comentar
+                    </button>
+                </form>
+            }
+            else
+            {
+                <p><a href="@Url.Action("Login", "Account")">Inicia sesión</a> para comentar.</p>
+            }
+
+            <!-- Botones de Editar y Eliminar para el Propietario -->
+            @if (User.Identity.IsAuthenticated && tweet.UserId == Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)))
+            {
+                <div class="d-flex justify-content-end">
+                    <a asp-controller="Tweets" asp-action="Edit" asp-route-id="@tweet.Id" class="btn btn-sm btn-secondary mr-2">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a asp-controller="Tweets" asp-action="Delete" asp-route-id="@tweet.Id" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+}
+@section Scripts {
+    <!-- jQuery (si no está incluido en tu layout) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <!-- FontAwesome para los íconos -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" crossorigin="anonymous">
+
+    <!-- Anti-Forgery Token -->
+    <form id="like-form">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <script>
+        $(document).ready(function () {
+            $('.like-button').click(function (e) {
+                e.preventDefault();
+
+                var button = $(this);
+                var tweetId = button.data('tweet-id');
+                var isLiked = button.data('is-liked') === 'true';
+
+                var url = '';
+                if (isLiked) {
+                    url = '@Url.Action("Unlike", "Tweets")';
+                } else {
+                    url = '@Url.Action("Like", "Tweets")';
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    data: {
+                        tweetId: tweetId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (data) {
+                        // Actualizar el número de likes
+                        $('#likes-count-' + tweetId).text(data.likesCount);
+
+                        // Cambiar el estado del botón
+                        button.data('is-liked', (!isLiked).toString());
+
+                        if (!isLiked) {
+                            button.html('<i class="fas fa-heart"></i> Quitar Like');
+                        } else {
+                            button.html('<i class="far fa-heart"></i> Dar Like');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Ocurrió un error al procesar la solicitud.');
+                    }
+                });
+            });
+        });
+    </script>
+
+
+    <script>
+        $(document).ready(function () {
+            $('.follow-btn').click(function (e) {
+                e.preventDefault();
+                var button = $(this);
+                var form = button.closest('form');
+                var userId = form.data('user-id');
+                var isFollowing = button.data('following');
+                var url = isFollowing ? '@Url.Action("Unfollow", "Follows")' : '@Url.Action("Follow", "Follows")';
+
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    data: form.serialize(),
+                    success: function (response) {
+                        // Cambiar el estado del botón
+                        if (isFollowing) {
+                            button.text('Seguir');
+                            button.removeClass('btn-danger').addClass('btn-primary');
+                        } else {
+                            button.text('Dejar de Seguir');
+                            button.removeClass('btn-primary').addClass('btn-danger');
+                        }
+
+                        // Cambiar el estado de seguimiento
+                        button.data('following', !isFollowing);
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Ocurrió un error al procesar la solicitud.');
+                    }
+                });
+            });
+        });
+    </script>
+
+
+
+}

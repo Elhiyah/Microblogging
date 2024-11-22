@@ -1,0 +1,40 @@
+﻿@model IEnumerable<WebMicroblogging.Models.User>
+
+@{
+    ViewData["Title"] = "Usuarios Seguidos";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Usuarios que estás siguiendo</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center" role="alert">
+            <p>No sigues a ningún usuario aún.</p>
+        </div>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var user in Model)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">@user.UserName</h5>
+                        <small class="text-muted">Email: @user.Email</small><br>
+                        <small class="text-muted">Fecha de Registro: @user.FechaNacimiento?.ToString("dd/MM/yyyy")</small>
+                    </div>
+
+                    <!-- Botón para dejar de seguir -->
+                    <form asp-controller="Follows" asp-action="Unfollow" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userId" value="@user.Id" />
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="fas fa-user-minus"></i> Dejar de Seguir
+                        </button>
+                    </form>
+                </li>
+            }
+        </ul>
+    }
+</div>
